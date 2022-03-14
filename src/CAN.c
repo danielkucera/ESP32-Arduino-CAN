@@ -50,6 +50,7 @@ static void CAN_read_frame_phy();
 static void CAN_isr(void *arg_p);
 static int CAN_write_frame_phy(const CAN_frame_t *p_frame);
 static SemaphoreHandle_t sem_tx_complete;
+static int data_overrun_counter = 0;
 
 static void CAN_isr(void *arg_p) {
 
@@ -63,6 +64,13 @@ static void CAN_isr(void *arg_p) {
 	// Handle RX frame available interrupt
 	if ((interrupt & __CAN_IRQ_RX) != 0)
 		CAN_read_frame_phy(&higherPriorityTaskWoken);
+
+	// count data overrun
+	if ((interrupt & __CAN_IRQ_DATA_OVERRUN) != 0) {
+		data_overrun_counter++;
+		// clear data overrun
+		MODULE_CAN->CMR.B.CDO = 1;
+	}
 
 	// Handle TX complete interrupt
 	// Handle error interrupts.
@@ -263,13 +271,31 @@ int CAN_init() {
 	return 0;
 }
 
-int CAN_write_frame(const CAN_frame_t *p_frame) {
+int CAN_write_frame(const CAN_frame_t *p_frame, unsigned long timeoutUs) {
 	if (sem_tx_complete == NULL) {
 		return -1;
 	}
 
+	unsigned long start = system_get_time();
+
+	// wait for transmit buffer to be released
+	while (!MODULE_CAN->SR.B.TBS) {
+		if (system_get_time() > start + timeoutUs) {
+			return -2;
+		}
+    	yield();
+	}
+
 	// Write the frame to the controller
 	CAN_write_frame_phy(p_frame);
+
+	while (!MODULE_CAN->SR.B.TCS) {
+		if (system_get_time() > start + timeoutUs) {
+			MODULE_CAN->CMR.B.AT = 1; // error, abort
+			return -3;
+		}
+		yield();
+	}
 
 	// wait for the frame tx to complete
 	xSemaphoreTake(sem_tx_complete, portMAX_DELAY);

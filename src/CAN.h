@@ -106,7 +106,7 @@ int CAN_init(void);
  * \param	p_frame	Pointer to the frame to be send, see #CAN_frame_t
  * \return  0 Frame has been written to the module
  */
-int CAN_write_frame(const CAN_frame_t *p_frame);
+int CAN_write_frame(const CAN_frame_t *p_frame, unsigned long timeoutUs);
 
 /**
  * \brief Stops the CAN Module
@@ -123,6 +123,7 @@ int CAN_stop(void);
  */
 int CAN_config_filter(const CAN_filter_t* p_filter);
 
+static int data_overrun_counter;
 
 #ifdef __cplusplus
 }

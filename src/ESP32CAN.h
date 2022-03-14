@@ -10,7 +10,9 @@ class ESP32CAN
         int CANInit();
 		int CANConfigFilter(const CAN_filter_t* p_filter);
         int CANWriteFrame(const CAN_frame_t* p_frame);
+        int CANWriteFrame(const CAN_frame_t* p_frame, unsigned long timeoutUs);
         int CANStop();
+        int CANOverrunCounter();
 };
 
 extern ESP32CAN ESP32Can;
