@@ -234,8 +234,8 @@ int CAN_init() {
 	 * buses (SAE class C)*/
 	MODULE_CAN->BTR1.B.SAM = 0x1;
 
-	// enable all interrupts
-	MODULE_CAN->IER.U = 0xff;
+	// enable all interrupts; bit4 that will cause CAN bus speeds to be halved in new V3 core 32E module
+	MODULE_CAN->IER.U = 0xef;
 
 	 // Set acceptance filter	
 	MODULE_CAN->MOD.B.AFM = __filter.FM;	
