@@ -276,11 +276,11 @@ int CAN_write_frame(const CAN_frame_t *p_frame, unsigned long timeoutUs) {
 		return -1;
 	}
 
-	unsigned long start = system_get_time();
+	unsigned long start = micros();
 
 	// wait for transmit buffer to be released
 	while (!MODULE_CAN->SR.B.TBS) {
-		if (system_get_time() > start + timeoutUs) {
+		if (micros() > start + timeoutUs) {
 			return -2;
 		}
     	yield();
@@ -289,16 +289,18 @@ int CAN_write_frame(const CAN_frame_t *p_frame, unsigned long timeoutUs) {
 	// Write the frame to the controller
 	CAN_write_frame_phy(p_frame);
 
-	while (!MODULE_CAN->SR.B.TCS) {
-		if (system_get_time() > start + timeoutUs) {
-			MODULE_CAN->CMR.B.AT = 1; // error, abort
-			return -3;
+	if (timeoutUs > 0){
+		while (!MODULE_CAN->SR.B.TCS) {
+			if (micros() > start + timeoutUs) {
+				MODULE_CAN->CMR.B.AT = 1; // error, abort
+				return -3;
+			}
+			yield();
 		}
-		yield();
-	}
 
-	// wait for the frame tx to complete
-	xSemaphoreTake(sem_tx_complete, portMAX_DELAY);
+		// wait for the frame tx to complete
+		return xSemaphoreTake(sem_tx_complete, portMAX_DELAY);
+	}
 
 	return 0;
 }
