@@ -35,7 +35,8 @@
 #include "freertos/queue.h"
 
 #include "esp_intr.h"
-#include "soc/dport_reg.h"
+//#include "soc/dport_reg.h"
+#include "soc/periph_defs.h"
 #include <math.h>
 
 #include "driver/gpio.h"
@@ -178,19 +179,18 @@ int CAN_init() {
 	double __tq;
 
 	// enable module
-	DPORT_SET_PERI_REG_MASK(DPORT_PERIP_CLK_EN_REG, DPORT_CAN_CLK_EN);
-	DPORT_SET_PERI_REG_MASK(DPORT_PERIP_RST_EN_REG, DPORT_CAN_RST);
-	DPORT_CLEAR_PERI_REG_MASK(DPORT_PERIP_RST_EN_REG, DPORT_CAN_RST);
+    periph_module_reset(PERIPH_TWAI_MODULE);
+    periph_module_enable(PERIPH_TWAI_MODULE);            //Enable APB CLK to TWAI peripheral
 
 	// configure TX pin
 	gpio_set_level(CAN_cfg.tx_pin_id, 1);
 	gpio_set_direction(CAN_cfg.tx_pin_id, GPIO_MODE_OUTPUT);
-	gpio_matrix_out(CAN_cfg.tx_pin_id, CAN_TX_IDX, 0, 0);
+	gpio_matrix_out(CAN_cfg.tx_pin_id, TWAI_TX_IDX, 0, 0);
 	gpio_pad_select_gpio(CAN_cfg.tx_pin_id);
 
 	// configure RX pin
 	gpio_set_direction(CAN_cfg.rx_pin_id, GPIO_MODE_INPUT);
-	gpio_matrix_in(CAN_cfg.rx_pin_id, CAN_RX_IDX, 0);
+	gpio_matrix_in(CAN_cfg.rx_pin_id, TWAI_RX_IDX, 0);
 	gpio_pad_select_gpio(CAN_cfg.rx_pin_id);
 
 	// set to PELICAN mode
@@ -263,7 +263,7 @@ int CAN_init() {
 	sem_tx_complete = xSemaphoreCreateBinary();
 
 	// install CAN ISR
-	esp_intr_alloc(ETS_CAN_INTR_SOURCE, 0, CAN_isr, NULL, NULL);
+	esp_intr_alloc(ETS_TWAI_INTR_SOURCE, 0, CAN_isr, NULL, NULL);
 
 	// Showtime. Release Reset Mode.
 	MODULE_CAN->MOD.B.RM = 0;
