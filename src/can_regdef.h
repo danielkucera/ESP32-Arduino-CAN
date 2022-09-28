@@ -36,7 +36,11 @@ extern "C" {
 #endif
 
 /** \brief Start address of CAN registers */
+#ifdef ESP32C3
+#define MODULE_CAN ((volatile CAN_Module_t *) 0x6002b000)
+#else
 #define MODULE_CAN ((volatile CAN_Module_t *) 0x3ff6b000)
+#endif
 
 /** \brief Get standard message ID */
 #define _CAN_GET_STD_ID                                                                                                \
@@ -151,11 +155,20 @@ typedef struct {
 	uint32_t RESERVED0;
 	union {
 		uint32_t U; /**< \brief Unsigned access */
+#ifdef ESP32C3
+		struct {
+			unsigned int BRP : 13;         /**< \brief BTR0[12:0] Baud Rate Prescaler */
+			unsigned int reserved_1 : 1;   /**< \brief \internal Reserved  */
+			unsigned int SJW : 2;          /**< \brief BTR0[15:14] Synchronization Jump Width*/
+			unsigned int reserved_16 : 16; /**< \brief \internal Reserved  */
+		} B;
+#else
 		struct {
 			unsigned int BRP : 6;          /**< \brief BTR0[5:0] Baud Rate Prescaler */
 			unsigned int SJW : 2;          /**< \brief BTR0[7:6] Synchronization Jump Width*/
 			unsigned int reserved_24 : 24; /**< \brief \internal Reserved  */
 		} B;
+#endif
 	} BTR0;
 	union {
 		uint32_t U; /**< \brief Unsigned access */
