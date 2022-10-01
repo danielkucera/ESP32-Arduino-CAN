@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 /** \brief Start address of CAN registers */
-#ifdef ESP32C3
+#ifdef ARDUINO_ESP32C3_DEV
 #define MODULE_CAN ((volatile CAN_Module_t *) 0x6002b000)
 #else
 #define MODULE_CAN ((volatile CAN_Module_t *) 0x3ff6b000)
@@ -155,7 +155,7 @@ typedef struct {
 	uint32_t RESERVED0;
 	union {
 		uint32_t U; /**< \brief Unsigned access */
-#ifdef ESP32C3
+#ifdef ARDUINO_ESP32C3_DEV
 		struct {
 			unsigned int BRP : 13;         /**< \brief BTR0[12:0] Baud Rate Prescaler */
 			unsigned int reserved_1 : 1;   /**< \brief \internal Reserved  */
